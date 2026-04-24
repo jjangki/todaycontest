@@ -1,341 +1,374 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { CHANNELS, CONTESTS, PARTNERS } from '@/lib/data'
+import { CONTESTS, CHANNELS, PARTNERS } from '@/lib/data'
 
-const CHANNEL_COLORS: Record<string, string> = {
-  'Instagram': '#E1306C', 'Facebook': '#1877F2', 'YouTube': '#FF0000',
-  'TikTok': '#000000', 'X(Twitter)': '#000000', 'KakaoTalk': '#FEE500',
-  'Naver Blog': '#03C75A', 'Naver Cafe': '#03C75A', 'Brunch': '#333',
-  'Velog': '#20C997', 'LinkedIn': '#0A66C2', 'Pinterest': '#E60023',
-  'Threads': '#000000', 'Band': '#5BBA00', 'Everytime': '#E03131',
-  'Discord': '#5865F2', 'Telegram': '#26A5E4', 'Notion': '#37352F',
-  'Reddit': '#FF4500', 'Medium': '#000000',
+const CH_COLORS: Record<string, string> = {
+  'Instagram':'#E1306C','Facebook':'#1877F2','YouTube':'#FF0000','TikTok':'#010101',
+  'X(Twitter)':'#000','KakaoTalk':'#FEE500','Naver Blog':'#03C75A','Naver Cafe':'#03C75A',
+  'Brunch':'#555','Velog':'#20C997','LinkedIn':'#0A66C2','Pinterest':'#E60023',
+  'Threads':'#000','Band':'#5BBA00','Everytime':'#E03131','Discord':'#5865F2',
+  'Telegram':'#26A5E4','Notion':'#37352F','Reddit':'#FF4500','Medium':'#000',
+  'Tistory':'#FF6600','Naver Post':'#03C75A','Daum Cafe':'#FF5A00',
 }
 
-function useCountUp(target: number, duration = 2000, start = false) {
-  const [count, setCount] = useState(0)
+/* 채널을 SNS / 블로그 / 대회정보사이트 3그룹으로 */
+const CH_GROUPS = [
+  {
+    id: 'sns', label: 'SNS 채널', icon: '📱',
+    channels: ['Instagram','Facebook','YouTube','TikTok','X(Twitter)','LinkedIn','Pinterest','Threads','Reddit','Medium','Instagram Reels','YouTube Shorts'],
+  },
+  {
+    id: 'blog', label: '블로그', icon: '✍️',
+    channels: ['Naver Blog','Brunch','Velog','Tistory','Naver Post','Naver Cafe','Daum Cafe','Band'],
+  },
+  {
+    id: 'info', label: '대회정보 사이트', icon: '🏆',
+    channels: ['Everytime','Discord','Telegram','KakaoTalk','Notion','Whalespace','Clubhouse','네이버 지식인','Google My','Chzzk'],
+  },
+]
+
+function useCountUp(target: number, ms: number, go: boolean) {
+  const [n, setN] = useState(0)
   useEffect(() => {
-    if (!start) return
-    let startTime: number
-    const step = (timestamp: number) => {
-      if (!startTime) startTime = timestamp
-      const progress = Math.min((timestamp - startTime) / duration, 1)
-      const eased = 1 - Math.pow(1 - progress, 3)
-      setCount(Math.floor(eased * target))
-      if (progress < 1) requestAnimationFrame(step)
+    if (!go) return
+    let t0: number
+    const step = (ts: number) => {
+      if (!t0) t0 = ts
+      const p = Math.min((ts - t0) / ms, 1)
+      setN(Math.floor((1 - Math.pow(1 - p, 3)) * target))
+      if (p < 1) requestAnimationFrame(step)
     }
     requestAnimationFrame(step)
-  }, [target, duration, start])
-  return count
+  }, [target, ms, go])
+  return n
 }
 
+/* 배너 카테고리 필터 */
+const FILTER_TABS = ['전체', '공모전', '대외활동', '이벤트', '해커톤', '사진']
+
 export default function HomeClient() {
-  const [statsVisible, setStatsVisible] = useState(false)
+  const [started, setStarted] = useState(false)
+  const [activeChTab, setActiveChTab] = useState('sns')
+  const [filterTab, setFilterTab] = useState('전체')
+  const [listPage, setListPage] = useState(1)
+  const LIST_PER_PAGE = 10
 
   useEffect(() => {
-    const timer = setTimeout(() => setStatsVisible(true), 500)
-    return () => clearTimeout(timer)
+    const t = setTimeout(() => setStarted(true), 300)
+    return () => clearTimeout(t)
   }, [])
 
-  const c1 = useCountUp(40, 1800, statsVisible)
-  const c2 = useCountUp(1240, 2000, statsVisible)
-  const c3 = useCountUp(98, 1600, statsVisible)
-  const c4 = useCountUp(8500, 2200, statsVisible)
+  const c1 = useCountUp(40, 1400, started)
+  const c2 = useCountUp(1240, 1800, started)
+  const c3 = useCountUp(98, 1300, started)
+  const c4 = useCountUp(8500, 2000, started)
 
-  const marqueeChannels = [...CHANNELS, ...CHANNELS]
-  const marqueeChannels2 = [...CHANNELS.slice(10), ...CHANNELS, ...CHANNELS.slice(0, 10)]
+  const activeGroup = CH_GROUPS.find(g => g.id === activeChTab)!
+  const displayChs = CHANNELS.filter(ch => activeGroup.channels.includes(ch.name))
+
+  /* 배너 20개 & 리스트 */
+  const filteredContests = filterTab === '전체'
+    ? CONTESTS
+    : CONTESTS.filter(c => c.category === filterTab)
+
+  const bannerContests = filteredContests.slice(0, 20)
+  const listContests = filteredContests.slice(20)
+  const totalPages = Math.ceil(listContests.length / LIST_PER_PAGE)
+  const currentList = listContests.slice((listPage - 1) * LIST_PER_PAGE, listPage * LIST_PER_PAGE)
 
   return (
-    <main>
-      {/* HERO */}
-      <section className="hero" aria-labelledby="hero-title">
-        <div className="hero-bg-shape hero-bg-shape-1" aria-hidden="true" />
-        <div className="hero-bg-shape hero-bg-shape-2" aria-hidden="true" />
-        <div className="hero-inner container">
-          <div className="hero-content animate-fadeup">
-            <div className="hero-badge">
-              <span>🏆</span> 대한민국 1위 공모전 홍보 플랫폼
+    <main style={{ marginTop: 56 }}>
+
+      {/* ══════════ 플랫폼 현황 (최상단) ══════════ */}
+      <section className="platform-status-bar" aria-label="플랫폼 현황">
+        <div className="platform-status-inner">
+          <div className="platform-status-label">📊 플랫폼 현황</div>
+          <div className="platform-stats-row">
+            <div className="pstat-item">
+              <div className="pstat-num">{c1}개+</div>
+              <div className="pstat-label">연동 홍보 채널</div>
             </div>
-            <h1 className="hero-title" id="hero-title">
-              단 한 번의 등록,<br />
-              <span className="highlight">
-                <span className="yellow-line">40개 채널</span> 동시 홍보
-              </span>
+            <div className="pstat-divider" />
+            <div className="pstat-item">
+              <div className="pstat-num">{c2.toLocaleString()}건+</div>
+              <div className="pstat-label">등록 대회</div>
+            </div>
+            <div className="pstat-divider" />
+            <div className="pstat-item">
+              <div className="pstat-num">{c3}%</div>
+              <div className="pstat-label">주최사 만족도</div>
+            </div>
+            <div className="pstat-divider" />
+            <div className="pstat-item">
+              <div className="pstat-num">{c4.toLocaleString()}명+</div>
+              <div className="pstat-label">누적 주최사</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════ 히어로 ══════════ */}
+      <section className="hero2" aria-labelledby="hero-h1">
+        <div className="hero2-inner">
+          <div className="hero2-left animate-fadeup">
+            <div className="hero-eyebrow">🏆 대한민국 1위 각종 대회 홍보 플랫폼</div>
+            <h1 className="hero2-title" id="hero-h1">
+              단 한번의 게시글 등록으로<br />
+              <span className="blue-text">40개 동시 채널에 홍보</span>
             </h1>
-            <p className="hero-desc">
-              AI가 귀하의 공모전을 인스타그램, 유튜브, 네이버블로그 등<br />
-              40개 채널에 최적화된 콘텐츠로 자동 발행합니다.
+            <p className="hero2-desc">
+              공모전, 이벤트, 행사, 챌린지 등 어떤 대회든<br />
+              AI가 각 채널에 최적화된 콘텐츠를 자동 생성·발행합니다.
             </p>
-            <div className="hero-stats">
-              <div className="hero-stat">
-                <div className="num">{c1}개+</div>
-                <div className="label">홍보 채널</div>
-              </div>
-              <div className="hero-divider" />
-              <div className="hero-stat">
-                <div className="num">{c2.toLocaleString()}건+</div>
-                <div className="label">등록 대회</div>
-              </div>
-              <div className="hero-divider" />
-              <div className="hero-stat">
-                <div className="num">{c3}%</div>
-                <div className="label">만족도</div>
-              </div>
-              <div className="hero-divider" />
-              <div className="hero-stat">
-                <div className="num">{c4.toLocaleString()}명+</div>
-                <div className="label">이용 주최사</div>
-              </div>
-            </div>
-            <div className="hero-btns">
-              <Link href="/dashboard" className="btn-yellow">
-                🚀 무료로 시작하기
-              </Link>
-              <Link href="/contests" className="btn-secondary">
-                공모전 보러가기 →
-              </Link>
-            </div>
-          </div>
-          <div className="hero-visual" aria-hidden="true">
-            <div className="hero-float-card hero-float-card-1">
-              ✅ &nbsp;<strong>SNS 40개 채널</strong>&nbsp; 동시 등록 완료
-            </div>
-            <div className="hero-card-main">
-              <div className="hero-card-top">
-                <div className="hero-card-icon">🏆</div>
-                <div>
-                  <div style={{fontSize:14,fontWeight:700,color:'var(--gray-900)'}}>2024 AI 창작 공모전</div>
-                  <div style={{fontSize:12,color:'var(--gray-400)'}}>AI로 자동 홍보 중...</div>
+
+            {/* 채널 카운트 뱃지 */}
+            <div className="channel-count-badges">
+              {[
+                {icon:'📱', label:'SNS 채널', count:12},
+                {icon:'✍️', label:'블로그', count:8},
+                {icon:'🏆', label:'대회정보 사이트', count:20},
+              ].map((b, i) => (
+                <div key={i} className="channel-count-badge">
+                  <span>{b.icon}</span>
+                  <div>
+                    <div className="ccb-count">{b.count}개</div>
+                    <div className="ccb-label">{b.label}</div>
+                  </div>
                 </div>
+              ))}
+            </div>
+
+            <div className="hero2-btns">
+              <Link href="/dashboard" className="btn-sm btn-yellow btn-xl">🚀 게시글 등록하기</Link>
+              <Link href="/contests" className="btn-sm btn-secondary btn-lg">대회 목록 보기</Link>
+            </div>
+          </div>
+
+          {/* 우측 비주얼 */}
+          <div className="hero2-right">
+            <div className="hero-card2">
+              <div className="hc2-header">
+                <span style={{fontSize:18}}>🏆</span>
+                <div>
+                  <div className="hc2-title">2026 길 사진 공모전</div>
+                  <div className="hc2-sub">한국도로공사 · AI 자동 홍보 중</div>
+                </div>
+                <span className="hc2-live">● LIVE</span>
               </div>
-              <div style={{background:'var(--gray-50)',borderRadius:10,padding:'12px 14px',marginBottom:14}}>
-                <div style={{fontSize:12,color:'var(--gray-500)',marginBottom:8}}>📊 실시간 홍보 현황</div>
+              <div className="hc2-channels">
                 {[
-                  {name:'인스타그램',pct:95,color:'#E1306C'},
-                  {name:'유튜브',pct:87,color:'#FF0000'},
-                  {name:'네이버 블로그',pct:92,color:'#03C75A'},
-                  {name:'TikTok',pct:78,color:'#000'},
-                ].map(item => (
-                  <div key={item.name} style={{marginBottom:8}}>
-                    <div style={{display:'flex',justifyContent:'space-between',marginBottom:3,fontSize:11,fontWeight:600}}>
-                      <span>{item.name}</span>
-                      <span style={{color:item.color}}>{item.pct}%</span>
+                  {name:'인스타그램', pct:100, color:'#E1306C'},
+                  {name:'네이버 블로그', pct:95, color:'#03C75A'},
+                  {name:'유튜브', pct:88, color:'#FF0000'},
+                  {name:'페이스북', pct:92, color:'#1877F2'},
+                  {name:'티스토리', pct:85, color:'#FF6600'},
+                  {name:'카카오톡', pct:97, color:'#FEE500'},
+                ].map(row => (
+                  <div key={row.name} className="hc2-ch-row">
+                    <div className="hc2-ch-name">{row.name}</div>
+                    <div className="hc2-bar-bg">
+                      <div className="hc2-bar-fill" style={{width:`${row.pct}%`, background:row.color}} />
                     </div>
-                    <div style={{height:6,background:'var(--gray-200)',borderRadius:3,overflow:'hidden'}}>
-                      <div style={{height:'100%',width:`${item.pct}%`,background:item.color,borderRadius:3,transition:'width 1s ease'}} />
-                    </div>
+                    <div className="hc2-ch-pct" style={{color:row.color}}>{row.pct}%</div>
                   </div>
                 ))}
               </div>
-              <div className="channel-grid">
-                {CHANNELS.slice(0, 15).map(ch => (
-                  <div key={ch.name} className="channel-item" title={ch.name}
-                    style={{background:CHANNEL_COLORS[ch.name]||'var(--gray-400)',opacity:0.9}}>
-                    <span style={{fontSize:16}}>{ch.emoji}</span>
-                    <span style={{fontSize:9}}>{ch.short}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="hero-float-card hero-float-card-2">
-              📈 &nbsp;<strong>조회수 +2,847</strong>&nbsp; 지난 24시간
+              <div className="hc2-total">총 40개 채널 동시 발행 완료 ✓</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* MARQUEE */}
-      <section className="marquee-section" aria-label="지원 채널 목록">
-        <p className="marquee-label">자동 홍보 지원 채널 40+</p>
-        <div className="marquee-row marquee-wrap">
-          <div className="marquee-track">
-            {marqueeChannels.map((ch, i) => (
-              <div key={i} className="marquee-item">
-                <span className="icon" style={{background:CHANNEL_COLORS[ch.name]||'#888',color:'white',borderRadius:8,width:28,height:28,display:'flex',alignItems:'center',justifyContent:'center'}}>
-                  {ch.emoji}
-                </span>
-                {ch.name}
+      {/* ══════════ 채널별 홍보 탭 ══════════ */}
+      <section className="section section-white" aria-labelledby="channel-title">
+        <div className="container">
+          <div className="section-header">
+            <span className="section-label">📡 홍보 채널</span>
+            <h2 className="section-title" id="channel-title">채널별 자동 홍보 현황</h2>
+            <p className="section-desc">SNS, 블로그, 대회정보 사이트 등 총 40개+ 채널에 동시 발행</p>
+          </div>
+
+          {/* 그룹 탭 */}
+          <div className="ch-group-tabs">
+            {CH_GROUPS.map(g => (
+              <button key={g.id}
+                className={`ch-gtab${activeChTab === g.id ? ' active' : ''}`}
+                onClick={() => setActiveChTab(g.id)}>
+                <span>{g.icon}</span> {g.label}
+                <span className="ch-gtab-count">{g.channels.length}개</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="channel-grid2">
+            {displayChs.map((ch, i) => (
+              <div key={i} className="channel-card2">
+                <div className="ch2-icon" style={{background: CH_COLORS[ch.name] || '#888'}}>
+                  <span style={{fontSize:18}}>{ch.emoji}</span>
+                </div>
+                <div className="ch2-name">{ch.name}</div>
+                <div className="ch2-status">자동 발행 ✓</div>
+              </div>
+            ))}
+            {/* 빈 슬롯 */}
+            {Array.from({length: Math.max(0, 12 - displayChs.length)}).map((_, i) => (
+              <div key={`e${i}`} className="channel-card2 ch2-empty">
+                <div className="ch2-icon" style={{background:'#e5e7eb'}}>+</div>
+                <div className="ch2-name" style={{color:'#9ca3af',fontSize:10}}>추가 예정</div>
               </div>
             ))}
           </div>
-        </div>
-        <div className="marquee-row marquee-wrap" style={{marginTop:12}}>
-          <div className="marquee-track-rev">
-            {marqueeChannels2.map((ch, i) => (
-              <div key={i} className="marquee-item">
-                <span className="icon" style={{background:CHANNEL_COLORS[ch.name]||'#888',color:'white',borderRadius:8,width:28,height:28,display:'flex',alignItems:'center',justifyContent:'center'}}>
-                  {ch.emoji}
-                </span>
-                {ch.name}
-              </div>
-            ))}
+          <div className="ch-total-note">
+            + 전체 40개+ 채널 지원 중 &nbsp;|&nbsp; 매월 새 채널 추가
           </div>
         </div>
       </section>
 
-      {/* STATS */}
-      <section className="section section-alt" aria-labelledby="stats-title">
+      {/* ══════════ 오늘의 대회 (배너 20개 + 리스트) ══════════ */}
+      <section className="section" aria-labelledby="contest-section-title">
         <div className="container">
-          <div className="section-header">
-            <span className="section-badge">📊 플랫폼 현황</span>
-            <h2 className="section-title" id="stats-title">숫자로 증명하는<br />오늘의 대회 성과</h2>
+          {/* 섹션 헤더 */}
+          <div className="contests-section-header">
+            <div>
+              <span className="section-label">🔥 실시간</span>
+              <h2 className="section-title" id="contest-section-title" style={{marginTop:4}}>
+                지금 진행 중인 대회
+              </h2>
+            </div>
+            <Link href="/contests" className="btn-sm btn-secondary">전체 보기 →</Link>
           </div>
-          <div className="stats-grid">
-            {[
-              {icon:'🏆',num:`${c1}개+`,label:'연동 홍보 채널',color:'#EBF1FF'},
-              {icon:'📝',num:`${c2.toLocaleString()}건+`,label:'등록 완료 대회',color:'#FFF9E6'},
-              {icon:'⭐',num:`${c3}%`,label:'주최사 만족도',color:'#F0FFF4'},
-              {icon:'👥',num:`${c4.toLocaleString()}명+`,label:'누적 이용 주최사',color:'#FFF1F2'},
-            ].map((s,i) => (
-              <div key={i} className="stat-card">
-                <div className="stat-icon" style={{background:s.color}}>{s.icon}</div>
-                <div className="stat-num">{s.num}</div>
-                <div className="stat-label">{s.label}</div>
-              </div>
+
+          {/* 필터 탭 */}
+          <div className="filter-tabs-row">
+            {FILTER_TABS.map(t => (
+              <button key={t}
+                className={`filter-tab2${filterTab === t ? ' active' : ''}`}
+                onClick={() => { setFilterTab(t); setListPage(1) }}>
+                {t}
+              </button>
             ))}
           </div>
+
+          {/* 배너 그리드 - 상단 20개 */}
+          <div className="banner-grid20">
+            {bannerContests.map(c => (
+              <Link key={c.id} href={`/contests/${c.id}`} className="banner20-card">
+                <div className="banner20-thumb" style={{background: c.bgColor}}>
+                  <span style={{fontSize:30}}>{c.emoji}</span>
+                  <span className={`c-badge ${c.status}`}>{c.statusLabel}</span>
+                  <span className="banner20-dday">{c.dday}</span>
+                </div>
+                <div className="banner20-body">
+                  <div className="banner20-cat">{c.category}</div>
+                  <div className="banner20-title">{c.title}</div>
+                  <div className="banner20-org">{c.org}</div>
+                  <div className="banner20-date">마감 {c.deadline}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {/* ─── 텍스트 리스트 + 페이지네이션 ─── */}
+          {listContests.length > 0 && (
+            <div style={{marginTop: 32}}>
+              <div className="list-section-header">
+                <span className="list-section-title">📋 대회목록</span>
+                <span className="list-section-count">총 {filteredContests.length}건</span>
+              </div>
+              <div className="contest-list-table">
+                <div className="clt-head">
+                  <span>번호</span>
+                  <span>대회명</span>
+                  <span>주최기관</span>
+                  <span>마감일</span>
+                  <span>구분</span>
+                  <span>상태</span>
+                </div>
+                {currentList.map((c, i) => (
+                  <Link key={c.id} href={`/contests/${c.id}`} className="clt-row">
+                    <span className="clt-num">{(listPage - 1) * LIST_PER_PAGE + i + 1}</span>
+                    <span className="clt-title-col">{c.title}</span>
+                    <span className="clt-org-col">{c.org}</span>
+                    <span className="clt-date-col">{c.deadline}</span>
+                    <span className="clt-cat-col">{c.category}</span>
+                    <span>
+                      <span className={`c-badge ${c.status}`} style={{fontSize:10}}>{c.statusLabel}</span>
+                    </span>
+                  </Link>
+                ))}
+              </div>
+              {/* 페이지네이션 */}
+              {totalPages > 1 && (
+                <div className="pagination">
+                  <button className="page-btn" disabled={listPage <= 1} onClick={() => setListPage(p => p - 1)}>‹</button>
+                  {Array.from({length: totalPages}, (_, i) => i + 1).map(p => (
+                    <button key={p} className={`page-btn${listPage === p ? ' active' : ''}`} onClick={() => setListPage(p)}>{p}</button>
+                  ))}
+                  <button className="page-btn" disabled={listPage >= totalPages} onClick={() => setListPage(p => p + 1)}>›</button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
-      <section className="section" aria-labelledby="process-title">
+      {/* ══════════ 3단계 프로세스 ══════════ */}
+      <section className="section section-white" aria-labelledby="process-title">
         <div className="container">
           <div className="section-header">
-            <span className="section-badge">⚡ 3단계 간편 등록</span>
-            <h2 className="section-title" id="process-title">이렇게 간단합니다</h2>
-            <p className="section-desc">복잡한 과정 없이 3단계만으로 40개 채널에 동시 홍보가 완료됩니다</p>
+            <span className="section-label">⚡ 이용 방법</span>
+            <h2 className="section-title" id="process-title">3단계로 끝나는 간편 홍보</h2>
+            <p className="section-desc">공모전, 이벤트, 행사 등 어떤 대회든 단 3단계로 40개 채널 바이럴</p>
           </div>
           <div className="process-grid">
             {[
-              {num:'01',icon:'📝',title:'대회 정보 입력',desc:'공모전 이름, 기간, 시상 내역, 포스터 이미지 등 기본 정보를 한 번만 입력하세요.',points:['간단한 양식 작성','포스터 자동 최적화','AI 설명문 자동 생성']},
-              {num:'02',icon:'🤖',title:'AI 자동 콘텐츠 생성',desc:'AI가 각 채널 특성에 맞게 인스타그램용, 블로그용, X용 등 최적화된 콘텐츠를 자동 생성합니다.',points:['채널별 최적화','해시태그 자동 추천','이미지 자동 리사이징']},
-              {num:'03',icon:'🚀',title:'40개 채널 동시 발행',desc:'클릭 한 번으로 40개 채널에 즉시 발행됩니다. 실시간 현황판에서 진행 상황을 확인하세요.',points:['원클릭 동시 발행','실시간 현황 확인','발행 결과 리포트']},
-            ].map((step, i) => (
-              <div key={i} className="process-card" style={{position:'relative'}}>
-                {i < 2 && <div className="process-arrow" style={{right:-14}}>→</div>}
-                <div className="process-num">{step.num}</div>
-                <div className="process-icon">{step.icon}</div>
-                <h3 className="process-title">{step.title}</h3>
-                <p className="process-desc">{step.desc}</p>
-                <ul className="feature-list" style={{marginTop:16}}>
-                  {step.points.map((p,j) => <li key={j}>{p}</li>)}
-                </ul>
+              {step:'01', icon:'📝', title:'게시글 정보 입력',
+               desc:'대회명, 기간, 시상내역, 포스터를 한 번만 입력하세요. 어떤 대회든 바로 등록 가능합니다.'},
+              {step:'02', icon:'🤖', title:'AI 채널별 콘텐츠 생성',
+               desc:'AI가 인스타그램용, 블로그용, X용 등 각 채널에 맞는 최적화 콘텐츠를 자동 생성합니다.'},
+              {step:'03', icon:'🚀', title:'40개 채널 동시 발행',
+               desc:'확인 후 클릭 한 번으로 40개 채널에 동시 발행. 채널별 발행 현황을 실시간으로 확인하세요.'},
+            ].map((s, i) => (
+              <div key={i} className="process-card">
+                <div className="process-step-badge">{s.step}</div>
+                <div className="process-icon">{s.icon}</div>
+                <div className="process-card-title">{s.title}</div>
+                <p className="process-card-desc">{s.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CONTESTS PREVIEW */}
-      <section className="section section-alt" aria-labelledby="contest-preview-title">
+      {/* ══════════ 파트너 ══════════ */}
+      <section className="section" aria-labelledby="partner-title">
         <div className="container">
           <div className="section-header">
-            <span className="section-badge">🔥 최신 공모전</span>
-            <h2 className="section-title" id="contest-preview-title">지금 진행 중인 공모전·대회</h2>
-            <p className="section-desc">AI가 자동으로 수집·홍보하는 최신 공모전을 확인하세요</p>
-          </div>
-          <div className="filter-bar" style={{justifyContent:'center',marginBottom:32}}>
-            {['전체','신규등록','마감임박','상금높은순','공모전','대외활동'].map((tab,i) => (
-              <button key={i} className={`filter-tab${i===0?' active':''}`}>{tab}</button>
-            ))}
-          </div>
-          <div className="contest-grid">
-            {CONTESTS.slice(0, 12).map(c => (
-              <Link key={c.id} href={`/contests/${c.id}`} className="contest-card">
-                <div className="contest-thumb">
-                  <div className="contest-thumb-placeholder" style={{background:c.bgColor}}>
-                    {c.emoji}
-                  </div>
-                  <span className={`contest-badge badge-${c.status}`}>{c.statusLabel}</span>
-                  <span className="contest-dday">{c.dday}</span>
-                </div>
-                <div className="contest-info">
-                  <p className="contest-org">{c.org}</p>
-                  <h3 className="contest-title">{c.title}</h3>
-                  <p className="contest-prize">{c.prize}</p>
-                  <div className="contest-tags">
-                    {c.tags.map((t,i) => <span key={i} className="contest-tag">{t}</span>)}
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-          <div style={{textAlign:'center',marginTop:40}}>
-            <Link href="/contests" className="btn-primary" style={{padding:'14px 36px',fontSize:16}}>
-              전체 공모전 보기 ({CONTESTS.length}개+) →
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* FEATURES */}
-      <section className="section" aria-labelledby="features-title">
-        <div className="container">
-          <div className="section-header">
-            <span className="section-badge">✨ 핵심 기능</span>
-            <h2 className="section-title" id="features-title">왜 오늘의 대회인가요?</h2>
-            <p className="section-desc">주최사가 홍보에 쏟는 시간을 90% 절약하는 혁신적인 기능</p>
-          </div>
-          <div className="feature-grid">
-            {[
-              {icon:'🤖',bg:'#EBF1FF',title:'AI 콘텐츠 자동 생성',desc:'GPT-4 기반 AI가 공모전 정보를 분석하여 각 채널에 최적화된 글, 해시태그, 이미지 캡션을 자동으로 작성합니다.',points:['채널별 최적 문체 자동 적용','해시태그 자동 추천 및 삽입','클릭률 최적화 제목 생성','A/B 테스트 콘텐츠 생성']},
-              {icon:'📊',bg:'#FFF9E6',title:'실시간 성과 분석',desc:'발행된 콘텐츠의 조회수, 좋아요, 공유 수 등 채널별 성과 데이터를 실시간으로 수집하여 통합 대시보드에 표시합니다.',points:['채널별 실시간 조회수 수집','참여율·전환율 자동 계산','주간/월간 성과 리포트 제공','경쟁 공모전 비교 분석']},
-              {icon:'🖼️',bg:'#F0FFF4',title:'이미지 자동 최적화',desc:'업로드한 포스터 이미지를 각 플랫폼 규격에 맞게 자동으로 크롭·리사이징하고 최적화합니다.',points:['인스타 정사각형 자동 변환','유튜브 썸네일 자동 생성','플랫폼별 해상도 최적화','워터마크 자동 삽입 옵션']},
-              {icon:'⚡',bg:'#FFF1F2',title:'원클릭 40채널 발행',desc:'복잡한 로그인 없이 한 번의 클릭으로 연동된 40개 채널에 동시에 발행됩니다. 예약 발행도 지원합니다.',points:['OAuth 기반 채널 연동','예약 발행 스케줄링','발행 실패 자동 재시도','발행 현황 실시간 추적']},
-            ].map((f,i) => (
-              <div key={i} className="feature-card">
-                <div className="feature-icon-wrap" style={{background:f.bg}}>{f.icon}</div>
-                <h3 className="feature-title">{f.title}</h3>
-                <p className="feature-desc">{f.desc}</p>
-                <ul className="feature-list">
-                  {f.points.map((p,j) => <li key={j}>{p}</li>)}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* PARTNER */}
-      <section className="section section-alt" aria-labelledby="partner-title">
-        <div className="container">
-          <div className="section-header">
-            <span className="section-badge">🤝 파트너 기관</span>
-            <h2 className="section-title" id="partner-title">신뢰받는 파트너 기관</h2>
-            <p className="section-desc">정부기관, 대기업, 공공기관이 오늘의 대회를 선택했습니다</p>
+            <span className="section-label">🤝 파트너 기관</span>
+            <h2 className="section-title" id="partner-title">신뢰받는 파트너</h2>
           </div>
           <div className="partner-grid">
             {PARTNERS.map((p, i) => (
               <div key={i} className="partner-card">
                 <span className="partner-icon">{p.icon}</span>
-                <span>{p.name}</span>
+                <span className="partner-name">{p.name}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
+      {/* ══════════ CTA ══════════ */}
       <section className="cta-section" aria-labelledby="cta-title">
         <div className="container">
-          <div style={{marginBottom:16,fontSize:40}}>🚀</div>
-          <h2 className="cta-title" id="cta-title">지금 바로 무료로 시작하세요</h2>
-          <p className="cta-desc">
-            별도 계약 없이 즉시 사용 가능합니다.<br />
-            첫 1개월 모든 기능 무료 체험, 신용카드 불필요.
-          </p>
-          <div style={{display:'flex',gap:16,justifyContent:'center',flexWrap:'wrap'}}>
-            <Link href="/dashboard" className="btn-yellow btn-yellow-sm" style={{fontSize:16,padding:'14px 32px'}}>
-              무료 체험 시작하기 →
-            </Link>
-            <Link href="/pricing" className="btn-white">
-              요금제 보기
-            </Link>
+          <h2 className="cta-title" id="cta-title">어떤 대회든, 지금 바로 등록하세요</h2>
+          <p className="cta-desc">공모전·이벤트·행사·챌린지 모든 홍보물을<br />AI가 40개 채널에 자동 바이럴합니다</p>
+          <div className="cta-btns">
+            <Link href="/dashboard" className="btn-sm btn-yellow btn-xl">🚀 게시글 등록하기</Link>
+            <Link href="/pricing" className="btn-sm btn-cta-outline btn-lg">견적 보기</Link>
           </div>
-          <p style={{marginTop:24,fontSize:13,opacity:0.6}}>
-            ✓ 신용카드 불필요 &nbsp;·&nbsp; ✓ 1분 내 설정 완료 &nbsp;·&nbsp; ✓ 언제든 취소 가능
-          </p>
+          <p className="cta-footnote">✓ 신용카드 불필요 &nbsp;·&nbsp; ✓ 1분 내 등록 완료 &nbsp;·&nbsp; ✓ 언제든 취소 가능</p>
         </div>
       </section>
     </main>

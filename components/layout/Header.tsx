@@ -3,12 +3,11 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-const NAV_ITEMS = [
-  { href: '/', label: '홈' },
-  { href: '/contests', label: '공모전·대회' },
+const NAV = [
+  { href: '/contests', label: '오늘의 대회' },
   { href: '/service', label: '서비스 소개' },
-  { href: '/pricing', label: '요금제' },
-  { href: '/dashboard', label: '주최사 센터' },
+  { href: '/pricing', label: '견적·요금제' },
+  { href: '/dashboard', label: '게시글 등록' },
 ]
 
 export default function Header() {
@@ -17,60 +16,61 @@ export default function Header() {
   const pathname = usePathname()
 
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 10)
-    window.addEventListener('scroll', handler)
-    return () => window.removeEventListener('scroll', handler)
+    const fn = () => setScrolled(window.scrollY > 8)
+    window.addEventListener('scroll', fn)
+    return () => window.removeEventListener('scroll', fn)
   }, [])
-
-  useEffect(() => { setMobileOpen(false) }, [pathname])
+  useEffect(() => setMobileOpen(false), [pathname])
 
   return (
     <>
       <header className={`header${scrolled ? ' scrolled' : ''}`}>
         <div className="header-inner">
-          <Link href="/" className="header-logo">
-            <div className="logo-icon">T</div>
-            <span>오늘의 대회</span>
+          {/* ── 로고 ── */}
+          <Link href="/" className="header-logo" aria-label="D.day 홈으로">
+            <div className="logo-box">
+              <span className="logo-dday-txt">D.day</span>
+            </div>
+            <div className="logo-info">
+              <div className="logo-name">오늘의 대회</div>
+              <div className="logo-tagline">대한민국 1위 홍보 플랫폼</div>
+            </div>
           </Link>
-          <nav className="header-nav" aria-label="메인 네비게이션">
-            {NAV_ITEMS.map(item => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`nav-link${pathname === item.href ? ' active' : ''}`}
-              >
-                {item.label}
+
+          {/* ── 네비게이션 ── */}
+          <nav className="header-nav" aria-label="주요 메뉴">
+            {NAV.map(n => (
+              <Link key={n.href} href={n.href}
+                className={`nav-link${pathname === n.href ? ' active' : ''}${n.href === '/dashboard' ? ' nav-cta' : ''}`}>
+                {n.label}
               </Link>
             ))}
           </nav>
-          <div className="header-cta">
-            <Link href="/dashboard" className="btn-secondary" style={{fontSize:'13px',padding:'8px 16px'}}>로그인</Link>
-            <Link href="/dashboard" className="btn-primary" style={{fontSize:'13px',padding:'8px 16px'}}>무료 시작</Link>
+
+          {/* ── 우측 액션 ── */}
+          <div className="header-right">
+            <Link href="/dashboard" className="hdr-login-btn">로그인</Link>
+            <Link href="/dashboard" className="btn-sm btn-primary">게시글 등록하기</Link>
             <button
               className="mobile-menu-btn"
-              onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label="메뉴"
-            >
-              <span style={mobileOpen ? {transform:'rotate(45deg) translate(5px,5px)'} : {}}></span>
-              <span style={mobileOpen ? {opacity:0} : {}}></span>
-              <span style={mobileOpen ? {transform:'rotate(-45deg) translate(5px,-5px)'} : {}}></span>
+              onClick={() => setMobileOpen(v => !v)}
+              aria-label={mobileOpen ? '메뉴 닫기' : '메뉴 열기'}
+              aria-expanded={mobileOpen}>
+              <span className={mobileOpen ? 'bar bar-top open' : 'bar bar-top'} />
+              <span className={mobileOpen ? 'bar bar-mid open' : 'bar bar-mid'} />
+              <span className={mobileOpen ? 'bar bar-bot open' : 'bar bar-bot'} />
             </button>
           </div>
         </div>
       </header>
-      <nav className={`mobile-nav${mobileOpen ? ' open' : ''}`} aria-label="모바일 네비게이션">
-        {NAV_ITEMS.map(item => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={pathname === item.href ? 'active' : ''}
-          >
-            {item.label}
-          </Link>
-        ))}
-        <div className="mobile-nav-cta">
-          <Link href="/dashboard" className="btn-secondary">로그인</Link>
-          <Link href="/dashboard" className="btn-primary">무료 시작</Link>
+
+      {/* ── 모바일 드롭다운 ── */}
+      <nav className={`mobile-nav${mobileOpen ? ' open' : ''}`} aria-label="모바일 메뉴">
+        <Link href="/">홈</Link>
+        {NAV.map(n => <Link key={n.href} href={n.href}>{n.label}</Link>)}
+        <div className="mobile-nav-btns">
+          <Link href="/dashboard" className="btn-sm btn-secondary" style={{flex:1,justifyContent:'center'}}>로그인</Link>
+          <Link href="/dashboard" className="btn-sm btn-primary" style={{flex:1,justifyContent:'center'}}>게시글 등록하기</Link>
         </div>
       </nav>
     </>
