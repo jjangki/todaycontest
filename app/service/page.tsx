@@ -1,11 +1,11 @@
-import type { Metadata } from 'next';
-import ServicePageClient from '@/components/service/ServicePageClient';
+import type { Metadata } from 'next'
+import ServiceClient from '@/components/service/ServiceClient'
 
 export const metadata: Metadata = {
-  title: '서비스 소개 | 오늘의 대회',
-  description: 'AI 기반 공모전 자동 홍보 서비스 오늘의 대회를 소개합니다. 40개 채널 동시 배포, Smart AI Creator, 넷플릭스형 큐레이션 UI를 경험해보세요.',
-};
+  title: '서비스 소개',
+  description: 'AI가 40개 채널에 자동 발행하는 오늘의 대회 서비스를 소개합니다. Before/After 비교, 핵심 기능, FAQ 등을 확인하세요.',
+}
 
 export default function ServicePage() {
-  return <ServicePageClient />;
+  return <ServiceClient />
 }

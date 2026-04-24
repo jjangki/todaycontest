@@ -1,11 +1,11 @@
-import type { Metadata } from 'next';
-import DashboardClient from '@/components/dashboard/DashboardClient';
+import type { Metadata } from 'next'
+import DashboardClient from '@/components/dashboard/DashboardClient'
 
 export const metadata: Metadata = {
-  title: '주최사 CMS | 오늘의 대회',
-  description: '공모전을 등록하고 AI 자동 홍보 시스템을 통해 40개 채널에 동시 배포하세요. 채널별 맞춤 콘텐츠를 AI가 자동으로 생성합니다.',
-};
+  title: '주최사 대시보드',
+  description: '대회 등록, AI 콘텐츠 생성, 40개 채널 동시 발행을 관리하는 주최사 전용 대시보드입니다.',
+}
 
 export default function DashboardPage() {
-  return <DashboardClient />;
+  return <DashboardClient />
 }

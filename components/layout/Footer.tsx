@@ -1,145 +1,138 @@
-import Link from 'next/link';
+import Link from 'next/link'
 
 export default function Footer() {
   return (
-    <footer className="bg-[#0A0F1E] text-white mt-20" role="contentinfo">
-      {/* Main Footer */}
-      <div className="container-max py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
+    <footer className="footer" role="contentinfo">
+      <div className="container">
+        <div className="footer-grid">
           {/* Brand */}
-          <div className="md:col-span-1">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-                <span className="text-white font-black text-lg">오</span>
-              </div>
-              <div>
-                <div className="font-black text-xl leading-none">오늘의 대회</div>
-                <div className="text-xs text-primary-light font-semibold mt-0.5">TodayContest</div>
-              </div>
+          <div>
+            <div className="footer-logo">
+              <div style={{
+                width:36,height:36,
+                background:'var(--blue)',
+                borderRadius:10,
+                display:'flex',alignItems:'center',justifyContent:'center',
+                color:'white',fontWeight:900,fontSize:18
+              }}>T</div>
+              오늘의 대회
             </div>
-            <p className="text-gray-400 text-sm leading-relaxed mb-6">
-              대한민국 1위 AI 기반<br />
-              공모전·대회 자동 홍보 플랫폼
+            <p className="footer-desc">
+              대한민국 1위 AI 공모전·대회 자동 홍보 플랫폼.<br />
+              단 한 번의 등록으로 40개 채널 동시 홍보,<br />
+              AI가 채널별 최적 콘텐츠를 자동 생성합니다.
             </p>
-            <div className="flex gap-3">
-              {['📘', '📸', '▶️', '💬'].map((icon, i) => (
-                <button
-                  key={i}
-                  className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center hover:bg-primary transition-colors text-base"
-                  aria-label={`소셜 미디어 ${i + 1}`}
-                >
-                  {icon}
-                </button>
-              ))}
+            <div className="footer-contact">
+              <div><strong>고객센터</strong> 02-6953-1996</div>
+              <div><strong>이메일</strong> abc@babkorea.com</div>
+              <div><strong>주소</strong> 서울 성북구 화랑로 265, 3층</div>
+              <div><strong>운영시간</strong> 평일 09:00 ~ 18:00</div>
             </div>
           </div>
-
-          {/* Navigation */}
-          <nav className="md:col-span-1" aria-label="푸터 메뉴">
-            <h3 className="font-bold text-sm text-gray-300 uppercase tracking-wider mb-4">메뉴</h3>
-            <ul className="space-y-2.5">
-              {[
-                { href: '/', label: '홈' },
-                { href: '/contests', label: '오늘의 대회' },
-                { href: '/service', label: '서비스 소개' },
-                { href: '/pricing', label: '요금제 안내' },
-                { href: '/dashboard', label: '주최사 등록' },
-              ].map((item) => (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className="text-gray-400 hover:text-white text-sm transition-colors"
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
 
           {/* Services */}
-          <div className="md:col-span-1">
-            <h3 className="font-bold text-sm text-gray-300 uppercase tracking-wider mb-4">서비스</h3>
-            <ul className="space-y-2.5">
-              {[
-                'AI 자동 배포',
-                '채널별 콘텐츠 변환',
-                '대행 견적 서비스',
-                '접수 시스템 렌탈',
-                '심사 대행',
-                '시상식 기획',
-              ].map((service) => (
-                <li key={service}>
-                  <span className="text-gray-400 text-sm">{service}</span>
-                </li>
-              ))}
+          <div>
+            <h3 className="footer-col-title">서비스</h3>
+            <ul className="footer-links">
+              <li><Link href="/contests">공모전·대회 목록</Link></li>
+              <li><Link href="/service">서비스 소개</Link></li>
+              <li><Link href="/pricing">요금제</Link></li>
+              <li><Link href="/dashboard">주최사 센터</Link></li>
             </ul>
           </div>
 
-          {/* Contact */}
-          <address className="md:col-span-1 not-italic">
-            <h3 className="font-bold text-sm text-gray-300 uppercase tracking-wider mb-4">고객센터</h3>
-            <ul className="space-y-3">
-              <li>
-                <div className="text-xs text-gray-500 mb-0.5">대표전화</div>
-                <a href="tel:02-6953-1996" className="text-white font-semibold hover:text-accent transition-colors font-inter">
-                  02-6953-1996
-                </a>
-              </li>
-              <li>
-                <div className="text-xs text-gray-500 mb-0.5">이메일</div>
-                <a href="mailto:abc@babkorea.com" className="text-gray-400 hover:text-white text-sm transition-colors">
-                  abc@babkorea.com
-                </a>
-              </li>
-              <li>
-                <div className="text-xs text-gray-500 mb-0.5">운영시간</div>
-                <span className="text-gray-400 text-sm">평일 09:00 ~ 18:00</span>
-              </li>
-              <li className="pt-2">
-                <Link
-                  href="/pricing"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-text font-bold text-sm rounded-lg hover:bg-accent-dark transition-colors"
-                >
-                  📋 견적 문의
-                </Link>
-              </li>
+          {/* Support */}
+          <div>
+            <h3 className="footer-col-title">고객지원</h3>
+            <ul className="footer-links">
+              <li><a href="#">공지사항</a></li>
+              <li><a href="#">자주 묻는 질문</a></li>
+              <li><a href="#">1:1 문의</a></li>
+              <li><a href="#">사용 가이드</a></li>
             </ul>
-          </address>
-        </div>
-      </div>
+          </div>
 
-      {/* Bottom Footer */}
-      <div className="border-t border-white/10">
-        <div className="container-max py-6">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            {/* Company Info */}
-            <div className="text-gray-500 text-xs space-y-1">
-              <p>
-                <span className="text-gray-400 font-semibold">(주)수상한콘텐츠</span>
-                {' '}ㅣ 대표이사: 신현화, 박현학
-                {' '}ㅣ 사업자등록번호: 684-88-02992
-              </p>
-              <p>
-                서울특별시 성북구 화랑로 265, 3층
-                {' '}ㅣ 여성법인 인증 기업
-              </p>
-              <p className="text-gray-600">
-                © 2025 오늘의 대회 (TodayContest) — (주)수상한콘텐츠. All rights reserved.
-              </p>
+          {/* Legal */}
+          <div>
+            <h3 className="footer-col-title">약관 & 정책</h3>
+            <ul className="footer-links">
+              <li><a href="#">이용약관</a></li>
+              <li><a href="#">개인정보처리방침</a></li>
+              <li><a href="#">마케팅 활용 동의</a></li>
+            </ul>
+            <div style={{marginTop:20}}>
+              <h3 className="footer-col-title" style={{marginBottom:12}}>SNS</h3>
+              <div style={{display:'flex',gap:8}}>
+                {['📸','▶️','📝','🐦','🎵'].map((icon,i) => (
+                  <a key={i} href="#" style={{
+                    width:36,height:36,
+                    background:'rgba(255,255,255,0.08)',
+                    borderRadius:8,
+                    display:'flex',alignItems:'center',justifyContent:'center',
+                    fontSize:16,
+                    transition:'background 0.2s'
+                  }}>{icon}</a>
+                ))}
+              </div>
             </div>
+          </div>
+        </div>
 
-            {/* Legal Links */}
-            <nav className="flex items-center gap-4 text-xs text-gray-500" aria-label="법적 정보">
-              <button className="hover:text-gray-300 transition-colors">이용약관</button>
-              <span className="text-gray-700">|</span>
-              <button className="hover:text-gray-300 transition-colors font-semibold text-gray-400">개인정보처리방침</button>
-              <span className="text-gray-700">|</span>
-              <button className="hover:text-gray-300 transition-colors">운영정책</button>
-            </nav>
+        <div className="footer-bottom">
+          <div>
+            <p className="footer-copy">© 2024 오늘의 대회 (TodayContest). All rights reserved.</p>
+            <p className="footer-bizinfo">
+              법인명: (주)수상한콘텐츠 &nbsp;|&nbsp; 대표이사: 신현화, 박현학 &nbsp;|&nbsp; 사업자등록번호: 684-88-02992
+            </p>
+          </div>
+          <div style={{display:'flex',gap:16}}>
+            <a href="#" style={{fontSize:13,color:'var(--gray-600)'}}>이용약관</a>
+            <a href="#" style={{fontSize:13,color:'var(--gray-400)'}}>개인정보처리방침</a>
           </div>
         </div>
       </div>
+
+      {/* JSON-LD Organization Schema */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify({
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://todaycontest.kr/#organization",
+            name: "오늘의 대회",
+            alternateName: "TodayContest",
+            legalName: "(주)수상한콘텐츠",
+            url: "https://todaycontest.kr",
+            logo: "https://todaycontest.kr/logo.png",
+            contactPoint: {
+              "@type": "ContactPoint",
+              telephone: "02-6953-1996",
+              email: "abc@babkorea.com",
+              contactType: "customer service",
+              availableLanguage: "Korean"
+            },
+            address: {
+              "@type": "PostalAddress",
+              streetAddress: "화랑로 265, 3층",
+              addressLocality: "성북구",
+              addressRegion: "서울특별시",
+              addressCountry: "KR"
+            }
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://todaycontest.kr/#website",
+            url: "https://todaycontest.kr",
+            name: "오늘의 대회",
+            publisher: { "@id": "https://todaycontest.kr/#organization" },
+            potentialAction: {
+              "@type": "SearchAction",
+              target: "https://todaycontest.kr/contests?q={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          }
+        ]
+      })}} />
     </footer>
-  );
+  )
 }

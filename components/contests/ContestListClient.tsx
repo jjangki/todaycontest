@@ -1,168 +1,131 @@
-'use client';
+'use client'
+import { useState, useMemo } from 'react'
+import Link from 'next/link'
+import { CONTESTS } from '@/lib/data'
 
-import { useState, useMemo } from 'react';
-import Link from 'next/link';
-import { contests, Contest } from '@/lib/data';
-
-type FilterType = 'all' | 'new' | 'deadline' | 'prize';
-
-function shuffleArray<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
+const FILTER_TABS = [
+  {id:'all',label:'전체'},
+  {id:'new',label:'🆕 신규등록'},
+  {id:'closing',label:'⏰ 마감임박'},
+  {id:'prize',label:'💰 상금높은순'},
+  {id:'공모전',label:'공모전'},
+  {id:'대외활동',label:'대외활동'},
+]
 
 export default function ContestListClient() {
-  const [filter, setFilter] = useState<FilterType>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [filter, setFilter] = useState('all')
+  const [query, setQuery] = useState('')
+  const [page, setPage] = useState(1)
+  const PER_PAGE = 60
 
   const filtered = useMemo(() => {
-    let list = [...contests];
+    let list = [...CONTESTS]
+    if (filter === 'new') list = list.filter(c => c.status === 'new')
+    else if (filter === 'closing') list = list.filter(c => c.status === 'closing')
+    else if (filter === 'prize') list = list.sort((a,b) => {
+      const pa = parseInt(a.prize.replace(/[^0-9]/g,'')) || 0
+      const pb = parseInt(b.prize.replace(/[^0-9]/g,'')) || 0
+      return pb - pa
+    })
+    else if (filter === '공모전' || filter === '대외활동') list = list.filter(c => c.category === filter)
+    if (query) list = list.filter(c =>
+      c.title.includes(query) || c.org.includes(query) || c.tags.some(t => t.includes(query))
+    )
+    return list
+  }, [filter, query])
 
-    // Search filter
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      list = list.filter(c =>
-        c.title.toLowerCase().includes(q) ||
-        c.organizer.toLowerCase().includes(q) ||
-        c.category.toLowerCase().includes(q) ||
-        c.tags.some(t => t.toLowerCase().includes(q))
-      );
-    }
-
-    // Tab filter
-    switch (filter) {
-      case 'new':
-        list = list.filter(c => c.isNew).sort((a, b) => b.id - a.id);
-        break;
-      case 'deadline':
-        list = list.filter(c => c.dday <= 30).sort((a, b) => a.dday - b.dday);
-        break;
-      case 'prize':
-        list = list.sort((a, b) => b.prize - a.prize);
-        break;
-      default:
-        list = shuffleArray(list);
-        break;
-    }
-
-    return list.slice(0, 60);
-  }, [filter, searchQuery]);
+  const pageCount = Math.ceil(filtered.length / PER_PAGE)
+  const displayed = filtered.slice(0, page * PER_PAGE)
 
   return (
-    <>
-      {/* Search & Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8">
+    <main>
+      {/* Page Header */}
+      <div className="page-header">
+        <div className="page-header-inner">
+          <div className="page-header-breadcrumb">
+            <Link href="/">홈</Link> <span>/</span> <span>공모전·대회</span>
+          </div>
+          <h1 className="page-header-title">공모전·대회 목록</h1>
+          <p className="page-header-desc">최신 공모전과 대외활동을 한눈에 모아보세요</p>
+        </div>
+      </div>
+
+      <div className="container" style={{padding:'32px 20px'}}>
         {/* Search */}
-        <div className="relative flex-1 max-w-sm">
+        <div className="search-box" style={{maxWidth:560,margin:'0 auto 28px'}}>
+          <span style={{fontSize:20}}>🔍</span>
           <input
             type="search"
-            placeholder="대회명, 주최사, 분야 검색..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="input-field pl-10 pr-4 text-sm"
+            placeholder="공모전명, 주최기관, 태그 검색..."
+            value={query}
+            onChange={e => { setQuery(e.target.value); setPage(1) }}
           />
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">🔍</span>
+          {query && (
+            <button onClick={() => setQuery('')} style={{color:'var(--gray-400)',fontSize:18,cursor:'pointer'}}>✕</button>
+          )}
         </div>
 
         {/* Filter Tabs */}
-        <nav className="flex items-center gap-2 flex-wrap" role="tablist" aria-label="공모전 필터">
-          {[
-            { key: 'all', label: '🎯 전체보기' },
-            { key: 'new', label: '🔥 신규등록' },
-            { key: 'deadline', label: '⏰ 마감임박' },
-            { key: 'prize', label: '💰 상금높은순' },
-          ].map(tab => (
+        <div className="filter-bar" style={{marginBottom:28}}>
+          {FILTER_TABS.map(tab => (
             <button
-              key={tab.key}
-              role="tab"
-              aria-selected={filter === tab.key}
-              onClick={() => setFilter(tab.key as FilterType)}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 border ${
-                filter === tab.key
-                  ? 'bg-primary text-white border-primary shadow-md'
-                  : 'bg-white text-text-muted border-border hover:border-primary hover:text-primary'
-              }`}
+              key={tab.id}
+              className={`filter-tab${filter === tab.id ? ' active' : ''}`}
+              onClick={() => { setFilter(tab.id); setPage(1) }}
             >
               {tab.label}
             </button>
           ))}
-        </nav>
-      </div>
-
-      {/* Result count */}
-      <div className="mb-4 flex items-center justify-between">
-        <p className="text-sm text-text-muted">
-          <strong className="text-text font-semibold">{filtered.length}개</strong>의 공모전을 찾았습니다
-        </p>
-        <span className="text-xs text-text-light bg-gray-100 px-3 py-1 rounded-full">
-          {filter === 'all' ? '새로고침마다 랜덤 노출' : '필터 적용 중'}
-        </span>
-      </div>
-
-      {/* Contest Grid - 6 x 10 */}
-      {filtered.length === 0 ? (
-        <div className="py-20 text-center">
-          <div className="text-5xl mb-4">🔍</div>
-          <p className="text-text-muted font-medium">검색 결과가 없습니다</p>
-          <p className="text-text-light text-sm mt-1">다른 키워드로 검색해보세요</p>
-        </div>
-      ) : (
-        <div className="contest-grid grid grid-cols-6 gap-2 md:gap-3">
-          {filtered.map((contest) => (
-            <ContestCard key={contest.id} contest={contest} />
-          ))}
-        </div>
-      )}
-    </>
-  );
-}
-
-function ContestCard({ contest }: { contest: Contest }) {
-  return (
-    <Link href={`/contests/${contest.id}`} className="block">
-      <article className="contest-card group aspect-square relative overflow-hidden rounded-xl shadow-sm hover:shadow-card-hover transition-all duration-300 hover:-translate-y-0.5">
-        {/* Background gradient */}
-        <div className={`absolute inset-0 bg-gradient-to-br ${contest.color}`} />
-
-        {/* Content */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-2 text-center">
-          <div className="text-xl md:text-2xl mb-1">🏆</div>
-          <p className="text-white font-bold text-[10px] md:text-xs leading-tight line-clamp-2 px-1">
-            {contest.title}
-          </p>
-          <p className="text-white/70 text-[9px] md:text-[10px] mt-0.5 hidden md:block">
-            {contest.organizer}
-          </p>
+          <span style={{marginLeft:'auto',fontSize:14,color:'var(--gray-400)',fontWeight:500}}>
+            총 {filtered.length}개
+          </span>
         </div>
 
-        {/* Hover overlay */}
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-2">
-          <div className="flex flex-wrap gap-1">
-            {contest.isNew && (
-              <span className="px-1.5 py-0.5 bg-accent text-text text-[9px] font-bold rounded">NEW</span>
+        {/* Grid */}
+        {filtered.length === 0 ? (
+          <div style={{textAlign:'center',padding:'80px 20px',color:'var(--gray-400)'}}>
+            <div style={{fontSize:48,marginBottom:16}}>🔍</div>
+            <p style={{fontSize:18,fontWeight:600}}>검색 결과가 없습니다</p>
+            <p style={{fontSize:14,marginTop:8}}>다른 검색어를 입력해보세요</p>
+            <button className="btn-primary" style={{marginTop:20}} onClick={() => {setQuery('');setFilter('all')}}>
+              전체 목록 보기
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="contest-grid">
+              {displayed.map(c => (
+                <Link key={c.id} href={`/contests/${c.id}`} className="contest-card">
+                  <div className="contest-thumb">
+                    <div className="contest-thumb-placeholder" style={{background:c.bgColor}}>
+                      {c.emoji}
+                    </div>
+                    <span className={`contest-badge badge-${c.status}`}>{c.statusLabel}</span>
+                    <span className="contest-dday">{c.dday}</span>
+                  </div>
+                  <div className="contest-info">
+                    <p className="contest-org">{c.org}</p>
+                    <h2 className="contest-title">{c.title}</h2>
+                    <p className="contest-prize">{c.prize}</p>
+                    <div className="contest-tags">
+                      <span className="contest-tag">{c.category}</span>
+                      {c.tags.slice(0,1).map((t,i) => <span key={i} className="contest-tag">{t}</span>)}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {page < pageCount && (
+              <div style={{textAlign:'center',marginTop:40}}>
+                <button className="btn-secondary" style={{padding:'12px 32px'}} onClick={() => setPage(p => p+1)}>
+                  더 보기 ({filtered.length - displayed.length}개 남음)
+                </button>
+              </div>
             )}
-            {contest.isHot && (
-              <span className="px-1.5 py-0.5 bg-red-500 text-white text-[9px] font-bold rounded">🔥HOT</span>
-            )}
-          </div>
-          <div className="text-white">
-            <p className="text-[10px] font-bold leading-tight line-clamp-2">{contest.title}</p>
-            <p className="text-accent text-[10px] font-semibold mt-0.5">{contest.prizeText}</p>
-            <p className="text-white/70 text-[9px]">D-{contest.dday}</p>
-          </div>
-        </div>
-
-        {/* D-day badge */}
-        {contest.dday <= 7 && (
-          <div className="absolute top-1 right-1 px-1.5 py-0.5 bg-red-500 text-white text-[9px] font-bold rounded animate-pulse">
-            D-{contest.dday}
-          </div>
+          </>
         )}
-      </article>
-    </Link>
-  );
+      </div>
+    </main>
+  )
 }
