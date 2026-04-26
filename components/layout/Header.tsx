@@ -27,13 +27,12 @@ export default function Header() {
       <header className={`header${scrolled ? ' scrolled' : ''}`}>
         <div className="header-inner">
           {/* ── 로고 ── */}
-          <Link href="/" className="header-logo" aria-label="D.day 홈으로">
+          <Link href="/" className="header-logo" aria-label="오늘의 대회 홈으로">
             <div className="logo-box">
-              <span className="logo-dday-txt">D.day</span>
+              <span className="logo-today-txt">to<span className="logo-dash">-</span>day</span>
             </div>
             <div className="logo-info">
-              <div className="logo-name">오늘의 대회</div>
-              <div className="logo-tagline">대한민국 1위 홍보 플랫폼</div>
+              <div className="logo-name-large">오늘의 대회</div>
             </div>
           </Link>
 
