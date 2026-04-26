@@ -8,8 +8,10 @@ const SORT_OPTS = [
   { value: 'deadline', label: '마감 임박순' },
   { value: 'new', label: '최신 등록순' },
   { value: 'prize', label: '상금 높은순' },
+  { value: 'views', label: '조회수 많은순' },
 ]
 const LIST_PER_PAGE = 15
+const TOP_BANNER_COUNT = 6 // 상단 배너 행 수 (한 행당 4개 = 24개 배너)
 
 export default function ContestListClient() {
   const [filterTab, setFilterTab] = useState('전체')
@@ -28,17 +30,13 @@ export default function ContestListClient() {
     return arr
   }, [filterTab, search])
 
-  const totalPages = Math.ceil(filtered.length / LIST_PER_PAGE)
-  const currentItems = filtered.slice((page - 1) * LIST_PER_PAGE, page * LIST_PER_PAGE)
+  const topBanners = filtered.slice(0, TOP_BANNER_COUNT * 4) // 6행 × 4열
+  const restItems = filtered.slice(TOP_BANNER_COUNT * 4)
+  const totalPages = Math.ceil(restItems.length / LIST_PER_PAGE)
+  const currentItems = restItems.slice((page - 1) * LIST_PER_PAGE, page * LIST_PER_PAGE)
 
-  const handleFilter = (tab: string) => {
-    setFilterTab(tab)
-    setPage(1)
-  }
-  const handleSearch = (v: string) => {
-    setSearch(v)
-    setPage(1)
-  }
+  const handleFilter = (tab: string) => { setFilterTab(tab); setPage(1) }
+  const handleSearch = (v: string) => { setSearch(v); setPage(1) }
 
   return (
     <main style={{ marginTop: 56, background: 'var(--bg)', minHeight: 'calc(100vh - 56px)' }}>
@@ -47,15 +45,14 @@ export default function ContestListClient() {
         <div className="container">
           <div className="page-hero-content">
             <h1 className="page-hero-title">대회목록</h1>
-            <p className="page-hero-desc">
-              대한민국의 모든 공모전·이벤트·대외활동을 한 곳에서
-            </p>
+            <p className="page-hero-desc">대한민국의 모든 공모전·이벤트·대외활동을 한 곳에서</p>
           </div>
         </div>
       </div>
 
       <div className="container" style={{ padding: '24px 20px' }}>
-        {/* 필터 + 검색 행 */}
+
+        {/* ─── 필터 + 검색 ─── */}
         <div className="list-controls">
           <div className="filter-tab-group">
             {FILTER_TABS.map(t => (
@@ -91,8 +88,42 @@ export default function ContestListClient() {
           <span className="list-meta-count">총 <strong>{filtered.length}</strong>건의 대회</span>
         </div>
 
+        {/* ─── 상단 배너 6행 (항상 표시) ─── */}
+        {topBanners.length > 0 && (
+          <div style={{ marginBottom: 32 }}>
+            <div className="top-banners-label">
+              <span className="section-badge" style={{ fontSize: 12 }}>🔥 추천 대회</span>
+            </div>
+            <div className="banner-grid-6row">
+              {topBanners.map(c => (
+                <Link key={c.id} href={`/contests/${c.id}`} className="banner20-card">
+                  <div className="banner20-thumb" style={{ background: c.bgColor }}>
+                    <span style={{ fontSize: 26 }}>{c.emoji}</span>
+                    <span className={`c-badge ${c.status}`}>{c.statusLabel}</span>
+                    <span className="banner20-dday">{c.dday}</span>
+                  </div>
+                  <div className="banner20-body">
+                    <div className="banner20-cat">{c.category}</div>
+                    <div className="banner20-title">{c.title}</div>
+                    <div className="banner20-org">{c.org}</div>
+                    <div className="banner20-prize">{c.prize}</div>
+                    <div className="banner20-date">📅 {c.deadline}</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ─── 구분선 ─── */}
+        {restItems.length > 0 && (
+          <div className="list-divider-row">
+            <span>📋 전체 대회 목록</span>
+          </div>
+        )}
+
         {/* ─── 카드형 ─── */}
-        {viewMode === 'banner' && (
+        {viewMode === 'banner' && restItems.length > 0 && (
           <div className="banner-grid20" style={{ marginTop: 12 }}>
             {currentItems.map(c => (
               <Link key={c.id} href={`/contests/${c.id}`} className="banner20-card">
@@ -105,7 +136,8 @@ export default function ContestListClient() {
                   <div className="banner20-cat">{c.category}</div>
                   <div className="banner20-title">{c.title}</div>
                   <div className="banner20-org">{c.org}</div>
-                  <div className="banner20-date">마감 {c.deadline}</div>
+                  <div className="banner20-prize">{c.prize}</div>
+                  <div className="banner20-date">📅 마감 {c.deadline}</div>
                 </div>
               </Link>
             ))}
@@ -125,7 +157,7 @@ export default function ContestListClient() {
             </div>
             {currentItems.map((c, i) => (
               <Link key={c.id} href={`/contests/${c.id}`} className="clt-row">
-                <span className="clt-num">{(page - 1) * LIST_PER_PAGE + i + 1}</span>
+                <span className="clt-num">{topBanners.length + (page - 1) * LIST_PER_PAGE + i + 1}</span>
                 <span className="clt-title-col">{c.title}</span>
                 <span className="clt-org-col">{c.org}</span>
                 <span className="clt-date-col">{c.deadline}</span>

@@ -1,337 +1,429 @@
 'use client'
 import { useState, useMemo } from 'react'
-import Link from 'next/link'
+import {
+  FaInstagram, FaFacebook, FaYoutube, FaTiktok, FaLinkedin,
+  FaDiscord, FaTelegram, FaCheck, FaMinus, FaPlus
+} from 'react-icons/fa6'
+import { SiNaver, SiKakaotalk } from 'react-icons/si'
 
-/* ──────────────────────────────────────────────
-   요금제
-────────────────────────────────────────────── */
+/* ── 3 SaaS 플랜 ── */
 const PLANS = [
   {
-    id: 'basic', name: 'Basic', monthlyPrice: 99000,
-    desc: '소규모 주최사에 적합한 기본 플랜',
-    features: ['채널 10개 동시 발행', '월 10건 대회 등록', 'AI 콘텐츠 자동 생성', '기본 성과 분석', '이메일 지원'],
-    missing: ['예약 발행', 'A/B 테스트', 'API 연동', '전담 매니저'],
+    id: 'starter',
+    name: '스타터',
+    badge: '',
+    price: 29000,
+    unit: '월',
+    desc: '소규모 주최사 & 첫 홍보',
+    color: '#6B7280',
+    accentBg: '#F9FAFB',
+    features: [
+      { text:'20개 채널 동시 발행', ok:true },
+      { text:'월 3건 게시글 등록', ok:true },
+      { text:'AI 콘텐츠 생성 (기본)', ok:true },
+      { text:'공모전 사이트 5개', ok:true },
+      { text:'성과 분석 (기본)', ok:true },
+      { text:'커뮤니티 채널', ok:false },
+      { text:'SNS 광고 자동 연동', ok:false },
+      { text:'전담 CS 매니저', ok:false },
+    ],
+    cta: '무료로 시작하기',
   },
   {
-    id: 'standard', name: 'Standard', monthlyPrice: 299000,
-    desc: '대부분의 주최사가 선택하는 인기 플랜',
-    featured: true,
-    features: ['채널 40개 동시 발행', '월 50건 대회 등록', 'AI 콘텐츠 자동 생성', '고급 성과 분석', '예약 발행', 'A/B 테스트', '카카오/전화 지원'],
-    missing: ['API 연동', '전담 매니저'],
+    id: 'standard',
+    name: '스탠다드',
+    badge: '인기',
+    price: 79000,
+    unit: '월',
+    desc: '중규모 대회·채용 홍보',
+    color: '#0052FF',
+    accentBg: '#EBF1FF',
+    features: [
+      { text:'50개 채널 동시 발행', ok:true },
+      { text:'월 10건 게시글 등록', ok:true },
+      { text:'AI 콘텐츠 생성 (고급)', ok:true },
+      { text:'공모전 사이트 23개 전체', ok:true },
+      { text:'성과 분석 (상세)', ok:true },
+      { text:'커뮤니티 채널 20개', ok:true },
+      { text:'SNS 광고 자동 연동', ok:false },
+      { text:'전담 CS 매니저', ok:false },
+    ],
+    cta: '스탠다드 시작하기',
   },
   {
-    id: 'premium', name: 'Premium', monthlyPrice: 799000,
-    desc: '대기업·공공기관을 위한 올인원 플랜',
-    features: ['채널 40개+ 동시 발행', '무제한 대회 등록', 'AI 콘텐츠+수동 편집', '실시간 성과 분석', '예약 발행', 'A/B 테스트', 'API 연동', '전담 매니저', '맞춤 계약'],
-    missing: [],
+    id: 'premium',
+    name: '프리미엄',
+    badge: '추천',
+    price: 199000,
+    unit: '월',
+    desc: '대형 기관·공공기관·브랜드',
+    color: '#7C3AED',
+    accentBg: '#F5F3FF',
+    features: [
+      { text:'70개+ 채널 동시 발행', ok:true },
+      { text:'무제한 게시글 등록', ok:true },
+      { text:'AI 콘텐츠 생성 (프리미엄)', ok:true },
+      { text:'공모전 사이트 23개 전체', ok:true },
+      { text:'성과 분석 (실시간 리포트)', ok:true },
+      { text:'커뮤니티 채널 20개', ok:true },
+      { text:'SNS 광고 자동 연동', ok:true },
+      { text:'전담 CS 매니저', ok:true },
+    ],
+    cta: '프리미엄 시작하기',
   },
 ]
 
-/* ──────────────────────────────────────────────
-   견적서 서비스 항목 (견적서 만들기.txt 기반)
-────────────────────────────────────────────── */
-type QuoteItem = {
-  id: string; category: string; title: string; desc: string;
-  unit: string; price: number; defaultQty?: number;
+/* ── 견적 아이콘 카드 항목 ── */
+const ESTIMATE_ITEMS = [
+  /* 디자인/콘텐츠 */
+  { id:'d1', group:'디자인/콘텐츠', icon:'🎨', name:'포스터 디자인',        price:200000, unit:'건' },
+  { id:'d2', group:'디자인/콘텐츠', icon:'📸', name:'카드뉴스 제작 (5장)',   price:150000, unit:'건' },
+  { id:'d3', group:'디자인/콘텐츠', icon:'🎬', name:'홍보 영상 (30초)',      price:1500000,unit:'건' },
+  { id:'d4', group:'디자인/콘텐츠', icon:'🖨️', name:'현수막 제작 (대)',      price:35000,  unit:'매' },
+  { id:'d5', group:'디자인/콘텐츠', icon:'📋', name:'리플렛 디자인',         price:300000, unit:'건' },
+  /* 온라인 홍보 */
+  { id:'o1', group:'온라인 홍보',   icon:'📱', name:'SNS 채널 패키지 (20채널)',price:150000,unit:'건' },
+  { id:'o2', group:'온라인 홍보',   icon:'📝', name:'블로그 포스팅 패키지',  price:80000,  unit:'건' },
+  { id:'o3', group:'온라인 홍보',   icon:'🏆', name:'공모전 사이트 일괄 등록 (23곳)',price:150000,unit:'건' },
+  { id:'o4', group:'온라인 홍보',   icon:'💬', name:'커뮤니티 자동 게시',    price:100000, unit:'건' },
+  { id:'o5', group:'온라인 홍보',   icon:'🤖', name:'AI 콘텐츠 자동생성',    price:30000,  unit:'건' },
+  /* 바이럴/커뮤니티 */
+  { id:'v1', group:'바이럴/커뮤니티',icon:'⭐', name:'인플루언서 (마이크로)', price:300000, unit:'명' },
+  { id:'v2', group:'바이럴/커뮤니티',icon:'🌟', name:'인플루언서 (매크로)',   price:1000000,unit:'명' },
+  { id:'v3', group:'바이럴/커뮤니티',icon:'🔥', name:'커뮤니티 바이럴 게시', price:50000,  unit:'건' },
+  { id:'v4', group:'바이럴/커뮤니티',icon:'📣', name:'보도자료 배포',         price:500000, unit:'건' },
+]
+
+const GROUP_COLORS: Record<string, string> = {
+  '디자인/콘텐츠':  '#6C63FF',
+  '온라인 홍보':    '#0052FF',
+  '바이럴/커뮤니티':'#E91E63',
 }
 
-const QUOTE_ITEMS: QuoteItem[] = [
-  // 온라인 홍보
-  { id:'q01', category:'온라인 홍보', title:'SNS 자동 홍보 (40채널)', desc:'인스타, 페이스북, 유튜브 등 40개 채널 동시 발행', unit:'건', price:200000 },
-  { id:'q02', category:'온라인 홍보', title:'디자인 배너 변형', desc:'채널별 최적화 배너 이미지 제작', unit:'건', price:300000 },
-  { id:'q03', category:'온라인 홍보', title:'카드뉴스 홍보물 제작', desc:'SNS용 카드뉴스 디자인 제작', unit:'건', price:500000 },
-  { id:'q04', category:'온라인 홍보', title:'공모전 홍보 영상 제작', desc:'30~60초 홍보 영상 기획·편집', unit:'건', price:500000 },
-  { id:'q05', category:'온라인 홍보', title:'홍보 배너 광고', desc:'SNS 유료 배너 광고 집행', unit:'월', price:1500000 },
-  { id:'q06', category:'온라인 홍보', title:'공모전 업체 포스팅', desc:'주요 공모전 정보 사이트 등록', unit:'건', price:200000 },
-  { id:'q07', category:'온라인 홍보', title:'커뮤니티 바이럴 홍보', desc:'에브리타임, 에타 등 커뮤니티 홍보', unit:'월', price:1000000 },
-  { id:'q08', category:'온라인 홍보', title:'SNS 타겟 스폰서드 광고', desc:'인스타그램·페이스북 타겟팅 광고', unit:'월', price:500000 },
-  { id:'q09', category:'온라인 홍보', title:'자사블로그 홍보', desc:'네이버 블로그 전용 홍보 콘텐츠', unit:'건', price:500000 },
-  // 오프라인 홍보
-  { id:'q10', category:'오프라인 홍보', title:'서울지역 대학 포스터 부착', desc:'서울 소재 대학 캠퍼스 포스터 부착', unit:'개소', price:25000 },
-  { id:'q11', category:'오프라인 홍보', title:'경기지역 대학 포스터 부착', desc:'경기권 대학 캠퍼스 포스터 부착', unit:'개소', price:35000 },
-  { id:'q12', category:'오프라인 홍보', title:'지방지역 대학 포스터 부착', desc:'지방 대학 캠퍼스 포스터 부착', unit:'개소', price:55000 },
-  { id:'q13', category:'오프라인 홍보', title:'현수막 부착', desc:'주요 상권·교내 현수막 설치', unit:'개소', price:50000 },
-  { id:'q14', category:'오프라인 홍보', title:'지하철 포스터 부착', desc:'지하철역 광고판 포스터 부착', unit:'개소', price:15000 },
-  { id:'q15', category:'오프라인 홍보', title:'우편 발송', desc:'엽서·전단 우편 발송', unit:'부', price:3000 },
-  { id:'q16', category:'오프라인 홍보', title:'택배 발송', desc:'홍보물 택배 발송 대행', unit:'건', price:6000 },
-  // 인쇄 제작
-  { id:'q17', category:'인쇄 제작', title:'포스터 인쇄', desc:'A3/B2 포스터 대량 인쇄', unit:'식', price:500000 },
-  { id:'q18', category:'인쇄 제작', title:'대봉투 제작', desc:'A4 대봉투 인쇄·제작', unit:'식', price:200000 },
-  { id:'q19', category:'인쇄 제작', title:'현수막 인쇄', desc:'가로·세로 현수막 인쇄', unit:'식', price:50000 },
-  { id:'q20', category:'인쇄 제작', title:'X배너 인쇄', desc:'X형 배너 인쇄·제작', unit:'식', price:50000 },
-  { id:'q21', category:'인쇄 제작', title:'작품집 인쇄', desc:'수상작품집 편집·인쇄', unit:'식', price:600000 },
-  // 프로모션·이벤트
-  { id:'q22', category:'프로모션·이벤트', title:'대국민 투표 셋팅', desc:'온라인 국민 투표 페이지 구축', unit:'식', price:300000 },
-  { id:'q23', category:'프로모션·이벤트', title:'경품 발송 대행', desc:'수상자 경품 포장·발송 대행', unit:'건', price:5000 },
-  // 심사 진행
-  { id:'q24', category:'심사 진행', title:'작품 취합 및 필터링', desc:'제출 작품 수집·중복·부적격 검토', unit:'식', price:100000 },
-  { id:'q25', category:'심사 진행', title:'심사용 작품 출력', desc:'심사위원 배포용 작품 출력', unit:'건', price:3000 },
-  { id:'q26', category:'심사 진행', title:'오프라인 심사 진행', desc:'심사장 세팅·진행 지원', unit:'식', price:150000 },
-  { id:'q27', category:'심사 진행', title:'온라인 심사 진행', desc:'화상 심사 플랫폼 운영', unit:'식', price:300000 },
-  // 심사위원
-  { id:'q28', category:'심사위원', title:'심사위원 섭외 (일반)', desc:'분야 전문가 심사위원 섭외', unit:'명', price:300000 },
-  { id:'q29', category:'심사위원', title:'심사위원 섭외 (교수)', desc:'대학교수급 심사위원 섭외', unit:'명', price:500000 },
-  { id:'q30', category:'심사위원', title:'전문 심사위원단 섭외', desc:'10인 이상 전문 심사단 구성', unit:'식', price:3000000 },
-  // 홈페이지 구축
-  { id:'q31', category:'홈페이지 구축', title:'공모전 홈페이지', desc:'공모전 전용 소개 페이지 제작', unit:'식', price:500000 },
-  { id:'q32', category:'홈페이지 구축', title:'공모전 홈페이지 구축', desc:'접수·발표 포함 완성형 사이트', unit:'식', price:3000000 },
-  { id:'q33', category:'홈페이지 구축', title:'포스터 디자인 제작', desc:'공모전 대표 포스터 시각 디자인', unit:'식', price:800000 },
+/* ── SNS 광고 단가 ── */
+const AD_PLANS = [
+  { name:'Instagram 광고', emoji:<FaInstagram/>, color:'#E1306C', min:30, reach:'일 2~5만명', formats:['피드','스토리','릴스'] },
+  { name:'Facebook 광고',  emoji:<FaFacebook/>,  color:'#1877F2', min:30, reach:'일 3~6만명', formats:['피드','사이드바','그룹'] },
+  { name:'YouTube 광고',   emoji:<FaYoutube/>,   color:'#FF0000', min:50, reach:'일 1~3만명', formats:['건너뛸 수 있는','범퍼','디스커버리'] },
+  { name:'TikTok 광고',    emoji:<FaTiktok/>,    color:'#010101', min:30, reach:'일 3~8만명', formats:['인피드','탑뷰','해시태그'] },
+  { name:'Naver 검색광고', emoji:<SiNaver/>,     color:'#03C75A', min:10, reach:'CPC 과금',   formats:['키워드','쇼핑','플레이스'] },
+  { name:'카카오 광고',    emoji:<SiKakaotalk/>, color:'#FEE500', min:20, reach:'일 2~4만명', formats:['비즈보드','스토리','모먼트'] },
 ]
 
-const CATEGORIES = [...new Set(QUOTE_ITEMS.map(q => q.category))]
-
-type SelectedItem = { qty: number }
+interface CartItem { id:string; name:string; price:number; unit:string; qty:number }
 
 export default function PricingClient() {
-  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly')
-  const [selected, setSelected] = useState<Record<string, SelectedItem>>({})
-  const [openCat, setOpenCat] = useState<string>(CATEGORIES[0])
-  const [showModal, setShowModal] = useState(false)
-  const [quoteForm, setQuoteForm] = useState({ company:'', name:'', email:'', phone:'', memo:'' })
+  const [mode, setMode] = useState<'plans'|'estimate'|'ad'>('plans')
+  const [selectedPlan, setSelectedPlan] = useState<string|null>(null)
+  const [cart, setCart] = useState<Record<string, CartItem>>({})
+  const [quoteModal, setQuoteModal] = useState(false)
+  const [quoteForm, setQuoteForm] = useState({ company:'', name:'', phone:'', email:'', memo:'' })
 
-  const toggleItem = (id: string) => {
-    setSelected(prev => {
-      if (prev[id]) { const n = {...prev}; delete n[id]; return n }
-      return { ...prev, [id]: { qty: 1 } }
+  /* Cart helpers */
+  const toggleItem = (item: typeof ESTIMATE_ITEMS[0]) => {
+    setCart(c => {
+      if (c[item.id]) { const n={...c}; delete n[item.id]; return n }
+      return { ...c, [item.id]: { id:item.id, name:item.name, price:item.price, unit:item.unit, qty:1 } }
     })
   }
-  const setQty = (id: string, qty: number) => {
-    if (qty < 1) return
-    setSelected(prev => ({ ...prev, [id]: { qty } }))
+  const updateQty = (id:string, qty:number) => {
+    if (qty <= 0) { setCart(c=>{ const n={...c}; delete n[id]; return n }); return }
+    setCart(c => ({ ...c, [id]: { ...c[id], qty } }))
   }
 
-  const subtotal = useMemo(() =>
-    Object.entries(selected).reduce((acc, [id, {qty}]) => {
-      const item = QUOTE_ITEMS.find(q => q.id === id)
-      return acc + (item ? item.price * qty : 0)
-    }, 0)
-  , [selected])
+  const { subtotal, vat, total } = useMemo(() => {
+    const sub = Object.values(cart).reduce((s,i) => s + i.price*i.qty, 0)
+    return { subtotal:sub, vat:Math.floor(sub*0.1), total:Math.floor(sub*1.1) }
+  }, [cart])
 
-  const vat = Math.floor(subtotal * 0.1)
-  const total = subtotal + vat
+  const fmtKRW = (n:number) => n.toLocaleString()+'원'
+  const cartCount = Object.keys(cart).length
 
-  const discount = billingPeriod === 'yearly' ? Math.floor(subtotal * 0.15) : 0
-  const finalTotal = total - discount
-
-  const fmt = (n: number) => n.toLocaleString()
+  const groups = [...new Set(ESTIMATE_ITEMS.map(i=>i.group))]
 
   return (
-    <main style={{ marginTop: 56, background: 'var(--bg)', minHeight: 'calc(100vh - 56px)' }}>
+    <main style={{ marginTop:64, background:'var(--bg)', minHeight:'100vh' }}>
+
       {/* 페이지 헤더 */}
       <div className="page-hero-bar">
         <div className="container">
           <div className="page-hero-content">
-            <h1 className="page-hero-title">견적·요금제</h1>
-            <p className="page-hero-desc">필요한 서비스를 직접 선택하고 견적을 받아보세요</p>
+            <h1 className="page-hero-title">요금제 & 견적</h1>
+            <p className="page-hero-desc">소규모부터 대기업까지 맞는 플랜을 선택하세요</p>
           </div>
         </div>
       </div>
 
-      <div className="container" style={{ padding: '32px 20px' }}>
+      <div className="container" style={{ padding:'32px 20px 100px' }}>
 
-        {/* ─── 요금제 ─── */}
-        <div className="section-header" style={{ marginBottom: 24 }}>
-          <span className="section-label">💼 요금제</span>
-          <h2 className="section-title">정기 구독 플랜</h2>
+        {/* 모드 탭 */}
+        <div className="pricing-mode-tabs">
+          <button className={`pricing-mode-tab${mode==='plans'?' active':''}`} onClick={()=>setMode('plans')}>
+            💎 요금제 플랜
+          </button>
+          <button className={`pricing-mode-tab${mode==='estimate'?' active':''}`} onClick={()=>setMode('estimate')}>
+            📋 맞춤 견적서
+          </button>
+          <button className={`pricing-mode-tab${mode==='ad'?' active':''}`} onClick={()=>setMode('ad')}>
+            💰 SNS 광고 단가
+          </button>
         </div>
 
-        <div className="billing-toggle">
-          <button className={`bill-btn${billingPeriod==='monthly'?' active':''}`} onClick={() => setBillingPeriod('monthly')}>월간 결제</button>
-          <button className={`bill-btn${billingPeriod==='yearly'?' active':''}`} onClick={() => setBillingPeriod('yearly')}>연간 결제 <span className="bill-save-badge">15% 절약</span></button>
-        </div>
+        {/* ══ 요금제 플랜 ══ */}
+        {mode === 'plans' && (
+          <div>
+            <div className="text-center mb-10">
+              <h2 className="text-2xl font-extrabold text-gray-900 mb-2">합리적인 가격으로 시작하세요</h2>
+              <p className="text-gray-500 text-sm">모든 플랜은 14일 무료 체험 가능합니다 · 언제든 해지 가능</p>
+            </div>
 
-        <div className="pricing-grid">
-          {PLANS.map(p => {
-            const price = billingPeriod === 'yearly'
-              ? Math.floor(p.monthlyPrice * 12 * 0.85 / 12)
-              : p.monthlyPrice
-            return (
-              <div key={p.id} className={`pricing-card${p.featured ? ' featured' : ''}`}>
-                {p.featured && <div className="pricing-featured-badge">🔥 인기</div>}
-                <div className="pricing-plan-name">{p.name}</div>
-                <div className="pricing-plan-desc">{p.desc}</div>
-                <div className="pricing-plan-price">
-                  <span className="price-won">₩</span>
-                  <span className="price-num">{fmt(price)}</span>
-                  <span className="price-period">/월</span>
-                </div>
-                {billingPeriod === 'yearly' && (
-                  <div className="price-yearly-note">연간 ₩{fmt(price * 12)} 청구</div>
-                )}
-                <Link href="/dashboard" className={`btn-sm ${p.featured ? 'btn-primary' : 'btn-secondary'} pricing-cta-btn`}>
-                  시작하기
-                </Link>
-                <ul className="pricing-feature-list">
-                  {p.features.map((f, i) => <li key={i} className="pf-ok">✓ {f}</li>)}
-                  {p.missing.map((f, i) => <li key={i} className="pf-no">✕ {f}</li>)}
-                </ul>
-              </div>
-            )
-          })}
-        </div>
+            <div className="pricing-plans-grid">
+              {PLANS.map((plan) => (
+                <div key={plan.id}
+                  className={`pricing-plan-card${plan.badge==='인기'?' featured':''}`}
+                  style={{
+                    '--plan-color': plan.color,
+                    '--plan-bg': plan.accentBg,
+                    borderColor: selectedPlan===plan.id ? plan.color : undefined,
+                  } as React.CSSProperties}>
 
-        {/* ─── 견적서 생성기 ─── */}
-        <div className="section-header" style={{ marginTop: 56, marginBottom: 24 }}>
-          <span className="section-label">📋 견적서</span>
-          <h2 className="section-title">서비스 항목 선택</h2>
-          <p className="section-desc">필요한 서비스를 선택하면 자동으로 견적이 계산됩니다</p>
-        </div>
-
-        <div className="quote-layout">
-          {/* 좌측: 서비스 선택 */}
-          <div className="quote-items-panel">
-            {CATEGORIES.map(cat => (
-              <div key={cat} className="quote-cat-section">
-                <button
-                  className="quote-cat-header"
-                  onClick={() => setOpenCat(openCat === cat ? '' : cat)}>
-                  <span className="quote-cat-name">{cat}</span>
-                  <span className="quote-cat-arrow">{openCat === cat ? '▲' : '▼'}</span>
-                </button>
-                {openCat === cat && (
-                  <div className="quote-cat-body">
-                    {QUOTE_ITEMS.filter(q => q.category === cat).map(item => {
-                      const isSelected = !!selected[item.id]
-                      return (
-                        <div key={item.id} className={`quote-item-row${isSelected ? ' selected' : ''}`}>
-                          <div className="qi-check" onClick={() => toggleItem(item.id)}>
-                            <div className={`qi-checkbox${isSelected ? ' checked' : ''}`}>
-                              {isSelected && '✓'}
-                            </div>
-                          </div>
-                          <div className="qi-info" onClick={() => toggleItem(item.id)}>
-                            <div className="qi-title">{item.title}</div>
-                            <div className="qi-desc">{item.desc}</div>
-                            <div className="qi-unit-price">₩{fmt(item.price)} / {item.unit}</div>
-                          </div>
-                          {isSelected && (
-                            <div className="qi-qty">
-                              <button className="qty-btn" onClick={() => setQty(item.id, (selected[item.id]?.qty || 1) - 1)}>−</button>
-                              <input
-                                type="number" min={1}
-                                value={selected[item.id]?.qty || 1}
-                                onChange={e => setQty(item.id, Number(e.target.value))}
-                                className="qty-input"
-                              />
-                              <button className="qty-btn" onClick={() => setQty(item.id, (selected[item.id]?.qty || 1) + 1)}>+</button>
-                              <div className="qi-subtotal">₩{fmt(item.price * (selected[item.id]?.qty || 1))}</div>
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* 우측: 견적 영수증 */}
-          <div className="quote-receipt-panel">
-            <div className="quote-receipt">
-              <div className="qr-title">📄 견적서</div>
-              {Object.keys(selected).length === 0 ? (
-                <div className="qr-empty">
-                  <div style={{fontSize:40,marginBottom:12}}>📋</div>
-                  <div>서비스를 선택하면<br />견적이 자동 계산됩니다</div>
-                </div>
-              ) : (
-                <>
-                  <div className="qr-items">
-                    {Object.entries(selected).map(([id, {qty}]) => {
-                      const item = QUOTE_ITEMS.find(q => q.id === id)!
-                      return (
-                        <div key={id} className="qr-item">
-                          <div className="qr-item-name">{item.title}</div>
-                          <div className="qr-item-calc">
-                            {qty > 1 && <span>{qty} {item.unit} ×</span>} ₩{fmt(item.price)}
-                          </div>
-                          <div className="qr-item-total">₩{fmt(item.price * qty)}</div>
-                          <button className="qr-item-del" onClick={() => toggleItem(id)}>✕</button>
-                        </div>
-                      )
-                    })}
-                  </div>
-                  <div className="qr-divider" />
-                  <div className="qr-row">
-                    <span>공급가액</span><span>₩{fmt(subtotal)}</span>
-                  </div>
-                  <div className="qr-row">
-                    <span>부가세 (10%)</span><span>₩{fmt(vat)}</span>
-                  </div>
-                  {billingPeriod === 'yearly' && (
-                    <div className="qr-row" style={{color:'var(--green)'}}>
-                      <span>연간 할인 (15%)</span><span>-₩{fmt(discount)}</span>
+                  {plan.badge && (
+                    <div className="plan-badge" style={{ background:plan.color }}>
+                      {plan.badge}
                     </div>
                   )}
-                  <div className="qr-divider" />
-                  <div className="qr-total-row">
-                    <span>합계</span>
-                    <span className="qr-total-num">₩{fmt(finalTotal)}</span>
+
+                  <div className="plan-header" style={{ background:plan.accentBg }}>
+                    <div className="plan-name" style={{ color:plan.color }}>{plan.name}</div>
+                    <div className="plan-price-row">
+                      <span className="plan-price" style={{ color:plan.color }}>
+                        {fmtKRW(plan.price)}
+                      </span>
+                      <span className="plan-price-unit">/{plan.unit}</span>
+                    </div>
+                    <p className="plan-desc">{plan.desc}</p>
                   </div>
-                  <div className="qr-note">※ 부가세 포함 금액입니다</div>
-                </>
-              )}
-              <button
-                className="btn-sm btn-primary qr-request-btn"
-                disabled={Object.keys(selected).length === 0}
-                onClick={() => setShowModal(true)}>
-                견적 요청하기
-              </button>
+
+                  <div className="plan-features">
+                    {plan.features.map((f,i) => (
+                      <div key={i} className={`plan-feature-row${f.ok?'':' disabled'}`}>
+                        <span className="plan-feature-icon" style={{ color:f.ok?plan.color:'#D1D5DB' }}>
+                          {f.ok ? <FaCheck/> : <FaMinus/>}
+                        </span>
+                        <span className="plan-feature-text">{f.text}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="plan-footer">
+                    <button
+                      onClick={() => { setSelectedPlan(plan.id); setQuoteModal(true) }}
+                      className="plan-cta-btn"
+                      style={{
+                        background: plan.badge==='인기'||plan.badge==='추천' ? plan.color : undefined,
+                        borderColor: plan.color,
+                        color: plan.badge==='인기'||plan.badge==='추천' ? '#fff' : plan.color,
+                      }}>
+                      {plan.cta}
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
+
+            <div className="pricing-compare-note">
+              <span>💡 더 많은 채널이 필요하시다면?</span>
+              <button onClick={()=>setMode('estimate')} className="underline text-blue-600 font-bold ml-1">맞춤 견적 문의하기 →</button>
+            </div>
+          </div>
+        )}
+
+        {/* ══ 맞춤 견적서 ══ */}
+        {mode === 'estimate' && (
+          <div className="estimate-layout">
+
+            {/* 좌: 선택 패널 */}
+            <div className="estimate-left">
+              <div className="mb-6">
+                <h2 className="text-xl font-extrabold text-gray-900 mb-1">서비스 선택</h2>
+                <p className="text-sm text-gray-500">원하는 항목을 클릭하면 우측 견적서에 추가됩니다</p>
+              </div>
+
+              {groups.map(group => (
+                <div key={group} className="estimate-group">
+                  <h3 className="estimate-group-title" style={{ color:GROUP_COLORS[group] }}>
+                    {group}
+                  </h3>
+                  <div className="estimate-icon-grid">
+                    {ESTIMATE_ITEMS.filter(i=>i.group===group).map(item => {
+                      const inCart = !!cart[item.id]
+                      return (
+                        <button key={item.id}
+                          onClick={()=>toggleItem(item)}
+                          className={`est-icon-card${inCart?' selected':''}`}
+                          style={{
+                            '--card-color': GROUP_COLORS[group],
+                            borderColor: inCart ? GROUP_COLORS[group] : undefined,
+                            background: inCart ? GROUP_COLORS[group]+'12' : undefined,
+                          } as React.CSSProperties}>
+                          <div className="est-icon-card-icon" style={{ background:GROUP_COLORS[group]+'18', color:GROUP_COLORS[group] }}>{item.icon}</div>
+                          <div className="est-icon-card-name">{item.name}</div>
+                          <div className="est-icon-card-price">{fmtKRW(item.price)}<span className="text-gray-400">/{item.unit}</span></div>
+                          {inCart && <div className="est-icon-card-check" style={{ background:GROUP_COLORS[group] }}><FaCheck/></div>}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* 우: 견적 영수증 (sticky) */}
+            <div className="estimate-receipt-wrap">
+              <div className="estimate-receipt">
+                <div className="receipt-header">
+                  <h3 className="receipt-title">📋 선택 견적서</h3>
+                  {cartCount > 0 && (
+                    <span className="receipt-count">{cartCount}개 선택</span>
+                  )}
+                </div>
+
+                {cartCount === 0 ? (
+                  <div className="receipt-empty">
+                    <div className="text-3xl mb-2">🛒</div>
+                    <div className="text-sm text-gray-400">왼쪽에서 서비스를 선택하세요</div>
+                  </div>
+                ) : (
+                  <div className="receipt-items">
+                    {Object.values(cart).map(item => (
+                      <div key={item.id} className="receipt-item">
+                        <div className="receipt-item-name">{item.name}</div>
+                        <div className="receipt-item-row">
+                          <div className="receipt-qty-ctrl">
+                            <button onClick={()=>updateQty(item.id, item.qty-1)} className="qty-btn-sm">−</button>
+                            <span className="qty-val">{item.qty}</span>
+                            <button onClick={()=>updateQty(item.id, item.qty+1)} className="qty-btn-sm">+</button>
+                          </div>
+                          <div className="receipt-item-price">{fmtKRW(item.price*item.qty)}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="receipt-total-section">
+                  <div className="receipt-total-row">
+                    <span>공급가액</span><span>{fmtKRW(subtotal)}</span>
+                  </div>
+                  <div className="receipt-total-row">
+                    <span>부가세 (10%)</span><span>{fmtKRW(vat)}</span>
+                  </div>
+                  <div className="receipt-total-row grand">
+                    <span>합계금액</span>
+                    <span className="receipt-grand">{fmtKRW(total)}</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={()=>setQuoteModal(true)}
+                  disabled={cartCount===0}
+                  className="receipt-cta-btn">
+                  📩 담당자 견적 요청
+                </button>
+                <p className="text-center text-xs text-gray-400 mt-2">
+                  ※ 실제 견적은 상담 후 조정될 수 있습니다
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ══ SNS 광고 단가 ══ */}
+        {mode === 'ad' && (
+          <div>
+            <div className="ad-notice-box">
+              <span className="ad-notice-icon">ℹ️</span>
+              <div>
+                <strong>SNS 광고 안내</strong>
+                <p>표시된 금액은 최소 일일 집행 예산입니다. 월 구독 없이 필요한 기간만 선택하여 집행할 수 있습니다.</p>
+              </div>
+            </div>
+
+            <div className="ad-plans-grid">
+              {AD_PLANS.map((plan,i) => (
+                <div key={i} className="ad-plan-card">
+                  <div className="apc-header" style={{ background:plan.color+'18' }}>
+                    <div className="apc-icon text-2xl" style={{ background:plan.color, color:'#fff' }}>{plan.emoji}</div>
+                    <div className="apc-name">{plan.name}</div>
+                  </div>
+                  <div className="apc-body">
+                    <div className="apc-min-budget">
+                      <span className="apc-min-label">최소 일 집행 예산</span>
+                      <span className="apc-min-val" style={{ color:plan.color }}>{plan.min}만원<span className="apc-unit">/일</span></span>
+                    </div>
+                    <div className="apc-reach">📊 {plan.reach}</div>
+                    <div className="apc-formats">
+                      {plan.formats.map((f,j)=><span key={j} className="apc-format-chip">{f}</span>)}
+                    </div>
+                  </div>
+                  <div className="apc-footer">
+                    <button className="btn-primary" style={{ width:'100%', justifyContent:'center' }}
+                      onClick={()=>setQuoteModal(true)}>
+                      광고 문의하기
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 연락처 */}
+        <div className="contact-bar" style={{ marginTop:60 }}>
+          <div className="contact-bar-inner">
+            <span className="contact-label">📞 상담 문의</span>
+            <a href="tel:02-6953-1996" className="contact-phone">02-6953-1996</a>
+            <span className="contact-sep">|</span>
+            <a href="mailto:abc@babkorea.com" className="contact-email">abc@babkorea.com</a>
           </div>
         </div>
       </div>
 
-      {/* ─── 견적 요청 모달 ─── */}
-      {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-box" onClick={e => e.stopPropagation()}>
+      {/* 견적/플랜 요청 모달 */}
+      {quoteModal && (
+        <div className="modal-overlay" onClick={()=>setQuoteModal(false)}>
+          <div className="modal-box" onClick={e=>e.stopPropagation()}>
             <div className="modal-header">
-              <h3 className="modal-title">견적 요청하기</h3>
-              <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
+              <h2 className="modal-title">📩 {selectedPlan ? `${PLANS.find(p=>p.id===selectedPlan)?.name} 플랜` : '맞춤 견적'} 요청</h2>
+              <button className="modal-close" onClick={()=>{ setQuoteModal(false); setSelectedPlan(null) }}>✕</button>
             </div>
             <div className="modal-body">
-              <div className="modal-summary">
-                <div className="ms-label">선택 서비스</div>
-                <div className="ms-count">{Object.keys(selected).length}개 항목</div>
-                <div className="ms-label">총 견적 금액</div>
-                <div className="ms-total">₩{fmt(finalTotal)}</div>
-              </div>
-              <div className="form-group">
-                <label className="form-label">회사명 / 기관명</label>
-                <input className="form-input" placeholder="(주)오늘의대회" value={quoteForm.company}
-                  onChange={e => setQuoteForm(f => ({...f, company:e.target.value}))} />
-              </div>
-              <div className="form-row">
-                <div className="form-group" style={{flex:1}}>
-                  <label className="form-label">담당자명</label>
-                  <input className="form-input" placeholder="홍길동" value={quoteForm.name}
-                    onChange={e => setQuoteForm(f => ({...f, name:e.target.value}))} />
+              {[
+                { l:'기관/회사명', p:'예: 중소벤처기업부', k:'company', type:'text' },
+                { l:'담당자명',   p:'홍길동',              k:'name',    type:'text' },
+                { l:'연락처',     p:'010-0000-0000',       k:'phone',   type:'tel' },
+                { l:'이메일',     p:'contact@example.com', k:'email',   type:'email' },
+              ].map((f)=>(
+                <div key={f.k} className="form-group">
+                  <label className="form-label">{f.l}</label>
+                  <input className="form-input" type={f.type} placeholder={f.p}
+                    value={(quoteForm as any)[f.k]}
+                    onChange={e=>setQuoteForm(ff=>({...ff,[f.k]:e.target.value}))} />
                 </div>
-                <div className="form-group" style={{flex:1}}>
-                  <label className="form-label">연락처</label>
-                  <input className="form-input" placeholder="010-0000-0000" value={quoteForm.phone}
-                    onChange={e => setQuoteForm(f => ({...f, phone:e.target.value}))} />
-                </div>
-              </div>
+              ))}
               <div className="form-group">
-                <label className="form-label">이메일</label>
-                <input className="form-input" placeholder="email@company.com" value={quoteForm.email}
-                  onChange={e => setQuoteForm(f => ({...f, email:e.target.value}))} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">요청 사항 (선택)</label>
-                <textarea className="form-textarea" rows={3} placeholder="추가 요청이나 참고사항을 입력해주세요." value={quoteForm.memo}
-                  onChange={e => setQuoteForm(f => ({...f, memo:e.target.value}))} />
+                <label className="form-label">문의 내용</label>
+                <textarea className="form-textarea" rows={4}
+                  placeholder="원하시는 서비스나 예산 등을 자유롭게 적어주세요"
+                  value={quoteForm.memo} onChange={e=>setQuoteForm(f=>({...f,memo:e.target.value}))} />
               </div>
             </div>
             <div className="modal-footer">
-              <button className="btn-sm btn-secondary" onClick={() => setShowModal(false)}>취소</button>
-              <button className="btn-sm btn-primary" onClick={() => {
-                alert('견적 요청이 접수되었습니다. 담당자가 1~2영업일 내 연락드립니다.')
-                setShowModal(false)
-              }}>요청 완료</button>
+              <button className="btn-secondary" onClick={()=>{ setQuoteModal(false); setSelectedPlan(null) }}>취소</button>
+              <button className="btn-primary"
+                onClick={()=>{ alert('견적 요청이 접수되었습니다. 1영업일 내 연락드리겠습니다!'); setQuoteModal(false); setSelectedPlan(null) }}>
+                요청 보내기
+              </button>
             </div>
           </div>
         </div>
